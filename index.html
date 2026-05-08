@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FSA PIC 믹스 퀴즈</title>
+<title>FSA PIC 랜덤 퀴즈</title>
 
 <style>
 :root{
@@ -34,7 +34,7 @@ header{
 
 header h1{
   margin:0;
-  font-size:26px;
+  font-size:25px;
 }
 
 header p{
@@ -42,88 +42,127 @@ header p{
   opacity:.9;
 }
 
-.container{
-  max-width:900px;
+.wrap{
+  max-width:760px;
   margin:20px auto;
-  padding:0 14px 70px;
+  padding:0 14px 60px;
 }
 
 .card{
-  background:var(--card);
-  border-radius:18px;
-  padding:20px;
-  margin-bottom:18px;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  background:white;
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 3px 10px rgba(0,0,0,.06);
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:14px;
+  font-size:14px;
+  color:#6b7280;
 }
 
 .badge{
-  display:inline-block;
   background:#e6f3ed;
   color:var(--sb);
-  padding:5px 10px;
+  padding:6px 11px;
   border-radius:999px;
-  font-size:13px;
-  font-weight:700;
-  margin-bottom:10px;
+  font-weight:800;
 }
 
 .question{
-  font-size:18px;
-  font-weight:800;
+  font-size:20px;
+  font-weight:900;
   line-height:1.45;
-  margin-bottom:14px;
+  margin:18px 0;
 }
 
-label{
+.option{
   display:block;
-  padding:12px;
+  width:100%;
+  text-align:left;
+  padding:14px;
   border:1px solid var(--line);
-  border-radius:12px;
+  background:white;
+  border-radius:14px;
   margin-bottom:10px;
+  font-size:16px;
   cursor:pointer;
+}
+
+.option:hover{
+  background:#f0f8f4;
 }
 
 input[type="text"]{
   width:100%;
-  padding:14px;
+  padding:15px;
   border:1px solid var(--line);
-  border-radius:12px;
-  font-size:16px;
+  border-radius:14px;
+  font-size:17px;
 }
 
-.hint{
-  font-size:13px;
-  color:#6b7280;
-  margin-top:8px;
-}
-
-button{
+.mainBtn{
   width:100%;
   border:none;
   background:var(--sb);
   color:white;
   font-size:18px;
-  font-weight:800;
+  font-weight:900;
   padding:16px;
   border-radius:16px;
+  margin-top:16px;
   cursor:pointer;
+}
+
+.subBtn{
+  width:100%;
+  border:1px solid var(--sb);
+  background:white;
+  color:var(--sb);
+  font-size:16px;
+  font-weight:800;
+  padding:14px;
+  border-radius:16px;
+  margin-top:10px;
+  cursor:pointer;
+}
+
+.feedback{
+  margin-top:18px;
+  padding:15px;
+  border-radius:14px;
+  display:none;
+  line-height:1.5;
+}
+
+.good{
+  background:#e8f7ee;
+  color:var(--good);
+  font-weight:800;
+}
+
+.bad{
+  background:#fdecec;
+  color:var(--bad);
+  font-weight:800;
+}
+
+.answer{
+  margin-top:8px;
+  font-size:14px;
+  color:#444;
 }
 
 .result{
   display:none;
-  margin-top:24px;
-  background:white;
-  border-radius:18px;
-  padding:22px;
+  text-align:center;
 }
 
-.correct{color:var(--good);font-weight:800}
-.wrong{color:var(--bad);font-weight:800}
-
-.answer{
-  font-size:14px;
-  color:#555;
-  margin:4px 0 14px;
+.result h2{
+  font-size:28px;
 }
 </style>
 </head>
@@ -131,56 +170,112 @@ button{
 <body>
 
 <header>
-  <h1>FSA PIC 믹스 퀴즈</h1>
-  <p>객관식 · OX · 빈칸 · 단답형</p>
+  <h1>FSA PIC 랜덤 퀴즈</h1>
+  <p>한 문제씩 풀기 · 랜덤 출제 · 난이도 강화</p>
 </header>
 
-<div class="container" id="quiz"></div>
+<div class="wrap">
+  <div class="card" id="quizCard">
+    <div class="top">
+      <span id="progress"></span>
+      <span class="badge" id="typeBadge"></span>
+    </div>
 
-<div class="container">
-  <button onclick="submitQuiz()">채점하기</button>
-  <div class="result" id="result"></div>
+    <div class="question" id="question"></div>
+    <div id="answerArea"></div>
+
+    <button class="mainBtn" id="checkBtn" onclick="checkAnswer()">정답 확인</button>
+
+    <div class="feedback" id="feedback"></div>
+
+    <button class="mainBtn" id="nextBtn" onclick="nextQuestion()" style="display:none;">다음 문제</button>
+  </div>
+
+  <div class="card result" id="resultCard">
+    <h2 id="finalScore"></h2>
+    <p id="finalText"></p>
+    <button class="mainBtn" onclick="restartQuiz()">다시 풀기</button>
+  </div>
 </div>
 
 <script>
-const quizData = [
+const allQuestions = [
   {
     type:"choice",
     label:"객관식",
-    q:"근무 불가 증상에 해당하지 않는 것은?",
-    options:["설사","구토","인후통","두통"],
-    answer:"두통"
-  },
-  {
-    type:"ox",
-    label:"OX",
-    q:"TCS 식품은 식품 안전을 위해 시간과 온도 관리가 필요한 식품이다.",
-    options:["O","X"],
-    answer:"O"
-  },
-  {
-    type:"text",
-    label:"빈칸",
-    q:"냉장 보관 적정 온도는 ___~___도이다.",
-    answer:["0~10","0-10","0에서10","0도~10도","0도-10도"]
+    q:"파트너가 설사, 구토, 황달, 고열 등의 증상을 보일 때 가장 적절한 조치는?",
+    options:[
+      "마스크를 착용하고 음료 제조만 진행한다",
+      "증상이 가벼우면 근무를 계속한다",
+      "병원 진단 및 치료를 받게 하고 증상에 따라 근무 제외 또는 제한 업무만 수행하게 한다",
+      "손소독 후 정상 근무한다"
+    ],
+    answer:"병원 진단 및 치료를 받게 하고 증상에 따라 근무 제외 또는 제한 업무만 수행하게 한다"
   },
   {
     type:"choice",
     label:"객관식",
-    q:"냉동고 적정 온도는?",
-    options:["0~10도","15~25도","-18도 이하","35도 이하"],
-    answer:"-18도 이하"
+    q:"매장 내 구토 사고 발생 시 Vomit kit 사용 전 우선 조치로 가장 알맞은 것은?",
+    options:[
+      "즉시 물걸레로 닦는다",
+      "7.5m 구역을 차단하고 접근을 제한한다",
+      "냄새 제거제를 먼저 뿌린다",
+      "고객이 없을 때까지 기다린다"
+    ],
+    answer:"7.5m 구역을 차단하고 접근을 제한한다"
   },
   {
     type:"text",
     label:"단답형",
-    q:"구토·설사 등 biohazard 사고 발생 시 차단해야 하는 구역은 몇 m인가?",
-    answer:["7.5m","7.5","7.5미터"]
+    q:"biohazard 사고 발생 시 차단해야 하는 구역은 몇 m인가?",
+    answer:["7.5","7.5m","7.5미터"]
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"Vomit kit 처리 절차 중 옳지 않은 것은?",
+    options:[
+      "응고제를 뿌린 뒤 패드로 덮어 노출을 차단한다",
+      "응고된 감염원은 Biohazard bag에 담는다",
+      "사용한 물품은 kit 봉투에 담아 즉시 외부 폐기물 처리장에 폐기한다",
+      "사용한 물품은 매장 내에 보관한다"
+    ],
+    answer:"사용한 물품은 매장 내에 보관한다"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"유통기한 경과 제품을 판매 및 보유했을 때 행정처분 연결로 맞는 것은?",
+    options:[
+      "판매 시 영업정지 15일 / 보유 시 영업정지 1개월",
+      "판매 시 영업정지 1개월 / 보유 시 영업정지 15일",
+      "판매 시 시정명령 / 보유 시 영업정지 7일",
+      "판매 시 영업정지 7일 / 보유 시 시정명령"
+    ],
+    answer:"판매 시 영업정지 1개월 / 보유 시 영업정지 15일"
+  },
+  {
+    type:"text",
+    label:"빈칸",
+    q:"실온 온도 범위는 ___~___도이다.",
+    answer:["1~35","1-35","1에서35","1도~35도"]
+  },
+  {
+    type:"text",
+    label:"빈칸",
+    q:"냉장 온도 범위는 ___~___도이다.",
+    answer:["0~10","0-10","0에서10","0도~10도"]
+  },
+  {
+    type:"text",
+    label:"빈칸",
+    q:"냉동 온도는 ___도 이하이다.",
+    answer:["-18","-18도","영하18","영하18도"]
   },
   {
     type:"choice",
     label:"절차형",
-    q:"올바른 손 세척 절차는?",
+    q:"올바른 손 세척 절차로 맞는 것은?",
     options:[
       "세척 > 헹굼 > 건조 > 소독",
       "헹굼 > 세척 > 소독 > 건조",
@@ -190,41 +285,59 @@ const quizData = [
     answer:"세척 > 헹굼 > 건조 > 소독"
   },
   {
+    type:"choice",
+    label:"객관식",
+    q:"식품 접촉면을 맨손으로 취급하면 안 되는 이유로 가장 알맞은 것은?",
+    options:[
+      "손의 온도가 식품 온도를 낮추기 때문에",
+      "상처나 손의 포도상구균 등이 식품에 교차오염될 수 있기 때문에",
+      "포장지가 손상될 수 있기 때문에",
+      "식품의 색이 변할 수 있기 때문에"
+    ],
+    answer:"상처나 손의 포도상구균 등이 식품에 교차오염될 수 있기 때문에"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"TCS 식품에 대한 설명으로 가장 정확한 것은?",
+    options:[
+      "모든 상온 보관 제품",
+      "유통기한이 긴 식품",
+      "식품 안전을 위해 시간과 온도 관리가 필요한 식품",
+      "완제품 음료만 해당되는 식품"
+    ],
+    answer:"식품 안전을 위해 시간과 온도 관리가 필요한 식품"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"매장에서 TCS 식품으로 볼 수 있는 제품군으로 가장 알맞은 것은?",
+    options:[
+      "모든 유제품, 샌드위치 등 냉장·냉동 보관이 필요한 제품",
+      "종이컵과 빨대",
+      "상온 MD 상품",
+      "개봉하지 않은 냅킨"
+    ],
+    answer:"모든 유제품, 샌드위치 등 냉장·냉동 보관이 필요한 제품"
+  },
+  {
     type:"ox",
     label:"OX",
-    q:"식품 접촉면을 맨손으로 취급하면 교차오염 위험이 있다.",
+    q:"TCS 식품은 일정 온도 이상에서 시간이 지나면 변질 가능성이 높아진다.",
     options:["O","X"],
     answer:"O"
   },
   {
     type:"choice",
     label:"객관식",
-    q:"Vomit kit 사용 시 착용해야 하는 보호구로 알맞은 것은?",
+    q:"교차오염에 대한 설명으로 가장 정확한 것은?",
     options:[
-      "앞치마만 착용",
-      "장갑만 착용",
-      "가운·위생모·마스크·장갑 착용",
-      "보호구 없이 빠르게 처리"
+      "식품끼리 온도가 같아지는 현상",
+      "식기나 손의 세균이 오염된 부분에서 식품으로 이동하는 현상",
+      "냉장고 문을 자주 여닫는 현상",
+      "제조 시간이 길어지는 현상"
     ],
-    answer:"가운·위생모·마스크·장갑 착용"
-  },
-  {
-    type:"text",
-    label:"빈칸",
-    q:"실온 온도 범위는 ___~___도이다.",
-    answer:["1~35","1-35","1도~35도","1도-35도"]
-  },
-  {
-    type:"choice",
-    label:"객관식",
-    q:"교차오염이 식품 매개성 질병을 일으키는 과정으로 알맞은 것은?",
-    options:[
-      "냉장 온도가 낮아져서 발생",
-      "식기나 손의 세균이 식품으로 이동하여 발생",
-      "음료가 빨리 제조되어 발생",
-      "라벨이 잘 붙어 있어서 발생"
-    ],
-    answer:"식기나 손의 세균이 식품으로 이동하여 발생"
+    answer:"식기나 손의 세균이 오염된 부분에서 식품으로 이동하는 현상"
   },
   {
     type:"ox",
@@ -236,142 +349,231 @@ const quizData = [
   {
     type:"choice",
     label:"객관식",
-    q:"기구·도구·장비 세척/소독의 기본 단계는?",
+    q:"역류 예방 방법으로 맞는 것은?",
     options:[
-      "소독 > 헹굼 > 세척 > 건조",
-      "세척 > 헹굼 > 건조 > 소독",
-      "건조 > 소독 > 세척 > 헹굼",
-      "헹굼 > 건조 > 소독 > 세척"
+      "배수호스를 하수구 안쪽까지 넣는다",
+      "배수구 이물질을 제거하고 배수관과 하수관의 직접 연결을 피한다",
+      "배수구 청소는 월 1회만 한다",
+      "물이 고여도 냄새가 없으면 괜찮다"
     ],
-    answer:"세척 > 헹굼 > 건조 > 소독"
+    answer:"배수구 이물질을 제거하고 배수관과 하수관의 직접 연결을 피한다"
   },
   {
     type:"choice",
     label:"객관식",
-    q:"스타벅스 주요 알레르기 유발 식품이 아닌 것은?",
-    options:["우유","대두","밀","참치"],
-    answer:"참치"
+    q:"기구, 도구, 장비 세척/소독에 대한 설명으로 맞는 것은?",
+    options:[
+      "음료 제조 및 푸드 제공에 사용한 집기류는 4시간 단위로 세척·소독한다",
+      "바쁜 시간에는 하루 1회만 해도 된다",
+      "소독 후 반드시 다시 오염된 물로 헹군다",
+      "겉으로 깨끗하면 소독은 생략 가능하다"
+    ],
+    answer:"음료 제조 및 푸드 제공에 사용한 집기류는 4시간 단위로 세척·소독한다"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"주요 알레르기 유발원과 반응 연결로 틀린 것은?",
+    options:[
+      "피부: 두드러기, 혈관부종",
+      "위장관: 구토, 설사, 복통",
+      "전신: 아나필락시스",
+      "호흡기: 골절, 타박상"
+    ],
+    answer:"호흡기: 골절, 타박상"
   },
   {
     type:"text",
     label:"단답형",
-    q:"매장 내 화학물질별 안전자료를 확인할 수 있는 문서는?",
+    q:"매장 내 독성 또는 화학물질의 안전자료를 확인하는 문서명은?",
     answer:["MSDS","msds","엠에스디에스"]
   },
   {
     type:"choice",
     label:"객관식",
-    q:"CCP 중요 관리점에 해당하지 않는 것은?",
-    options:["행동","온도","해충","파트너 닉네임"],
-    answer:"파트너 닉네임"
-  },
-  {
-    type:"text",
-    label:"빈칸",
-    q:"얼음/제조음료 규격 위반 시 식중독균 검출의 행정처분은 영업정지 ___일이다.",
-    answer:["30","30일"]
+    q:"CCP 중요 관리점에 포함되는 영역으로 가장 알맞은 것은?",
+    options:[
+      "행동, 온도, 해충, 오염",
+      "음악, 조명, 인테리어, 향",
+      "파트너 닉네임, 유니폼 색상",
+      "POS 위치, 매장 좌석 수"
+    ],
+    answer:"행동, 온도, 해충, 오염"
   },
   {
     type:"choice",
     label:"객관식",
-    q:"한글표시사항 전부 미표시 시 행정처분은?",
-    options:["영업정지 7일","영업정지 15일","영업정지 1개월","시정명령"],
-    answer:"영업정지 1개월"
+    q:"얼음/제조음료 규격 위반 시 행정처분 연결로 맞는 것은?",
+    options:[
+      "영업정지 15일 / 식중독균 검출 시 영업정지 30일",
+      "시정명령 / 식중독균 검출 시 영업정지 7일",
+      "영업정지 1개월 / 식중독균 검출 시 시정명령",
+      "영업정지 3일 / 식중독균 검출 시 5일"
+    ],
+    answer:"영업정지 15일 / 식중독균 검출 시 영업정지 30일"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"한글표시사항 기준 위반 행정처분으로 맞는 것은?",
+    options:[
+      "전부 미표시: 영업정지 1개월 / 제조연월일 또는 유통기한 미표시: 영업정지 7일",
+      "전부 미표시: 시정명령 / 제조연월일 미표시: 경고",
+      "전부 미표시: 영업정지 7일 / 제조연월일 미표시: 1개월",
+      "전부 미표시와 일부 미표시는 모두 경고"
+    ],
+    answer:"전부 미표시: 영업정지 1개월 / 제조연월일 또는 유통기한 미표시: 영업정지 7일"
   }
 ];
 
-const quiz = document.getElementById("quiz");
+let questions = [];
+let current = 0;
+let score = 0;
+let answered = false;
+const totalCount = 12;
 
-quizData.forEach((item, index) => {
-  const card = document.createElement("div");
-  card.className = "card";
-
-  let html = `
-    <div class="badge">${item.label}</div>
-    <div class="question">${index + 1}. ${item.q}</div>
-  `;
-
-  if(item.type === "choice" || item.type === "ox"){
-    item.options.forEach(option => {
-      html += `
-        <label>
-          <input type="radio" name="q${index}" value="${option}">
-          ${option}
-        </label>
-      `;
-    });
-  }
-
-  if(item.type === "text"){
-    html += `
-      <input type="text" name="q${index}" placeholder="정답 입력">
-      <div class="hint">띄어쓰기나 단위는 조금 달라도 정답 처리될 수 있음</div>
-    `;
-  }
-
-  card.innerHTML = html;
-  quiz.appendChild(card);
-});
+function shuffle(array){
+  return array.sort(() => Math.random() - 0.5);
+}
 
 function normalize(text){
   return String(text)
     .replace(/\s/g,"")
     .replace(/도/g,"")
     .replace(/미터/g,"m")
+    .replace(/일/g,"")
     .toLowerCase();
 }
 
-function submitQuiz(){
-  let score = 0;
-  let resultHTML = "";
-
-  quizData.forEach((item, index) => {
-    let userAnswer = "";
-
-    if(item.type === "choice" || item.type === "ox"){
-      const selected = document.querySelector(`input[name="q${index}"]:checked`);
-      userAnswer = selected ? selected.value : "";
-    }
-
-    if(item.type === "text"){
-      const input = document.querySelector(`input[name="q${index}"]`);
-      userAnswer = input.value;
-    }
-
-    let isCorrect = false;
-
-    if(Array.isArray(item.answer)){
-      isCorrect = item.answer.some(ans => normalize(ans) === normalize(userAnswer));
-    }else{
-      isCorrect = normalize(userAnswer) === normalize(item.answer);
-    }
-
-    if(isCorrect){
-      score++;
-      resultHTML += `<p class="correct">${index + 1}번 정답</p>`;
-    }else{
-      const answerText = Array.isArray(item.answer) ? item.answer[0] : item.answer;
-      resultHTML += `
-        <p class="wrong">${index + 1}번 오답</p>
-        <div class="answer">정답 : ${answerText}</div>
-      `;
-    }
-  });
-
-  const result = document.getElementById("result");
-  result.style.display = "block";
-  result.innerHTML = `
-    <h2>${quizData.length}문제 중 ${score}개 정답</h2>
-    <p>점수 : ${Math.round(score / quizData.length * 100)}점</p>
-    <hr>
-    ${resultHTML}
-  `;
-
-  window.scrollTo({
-    top: document.body.scrollHeight,
-    behavior: "smooth"
-  });
+function startQuiz(){
+  questions = shuffle([...allQuestions]).slice(0,totalCount);
+  current = 0;
+  score = 0;
+  answered = false;
+  document.getElementById("quizCard").style.display = "block";
+  document.getElementById("resultCard").style.display = "none";
+  renderQuestion();
 }
+
+function renderQuestion(){
+  answered = false;
+
+  const item = questions[current];
+
+  document.getElementById("progress").innerText = `${current + 1} / ${questions.length}`;
+  document.getElementById("typeBadge").innerText = item.label;
+  document.getElementById("question").innerText = item.q;
+  document.getElementById("feedback").style.display = "none";
+  document.getElementById("nextBtn").style.display = "none";
+  document.getElementById("checkBtn").style.display = "block";
+
+  const area = document.getElementById("answerArea");
+  area.innerHTML = "";
+
+  if(item.type === "choice" || item.type === "ox"){
+    shuffle([...item.options]).forEach(option => {
+      const btn = document.createElement("button");
+      btn.className = "option";
+      btn.innerText = option;
+      btn.onclick = () => selectOption(option);
+      area.appendChild(btn);
+    });
+  }else{
+    area.innerHTML = `<input type="text" id="textAnswer" placeholder="정답 입력">`;
+  }
+}
+
+let selectedAnswer = "";
+
+function selectOption(option){
+  selectedAnswer = option;
+  checkAnswer();
+}
+
+function checkAnswer(){
+  if(answered) return;
+
+  const item = questions[current];
+
+  let userAnswer = selectedAnswer;
+
+  if(item.type === "text"){
+    const input = document.getElementById("textAnswer");
+    userAnswer = input.value;
+  }
+
+  if(!userAnswer){
+    alert("답을 입력하거나 선택해줘");
+    return;
+  }
+
+  let isCorrect = false;
+
+  if(Array.isArray(item.answer)){
+    isCorrect = item.answer.some(ans => normalize(ans) === normalize(userAnswer));
+  }else{
+    isCorrect = normalize(userAnswer) === normalize(item.answer);
+  }
+
+  const feedback = document.getElementById("feedback");
+  feedback.style.display = "block";
+
+  if(isCorrect){
+    score++;
+    feedback.className = "feedback good";
+    feedback.innerHTML = "정답!";
+  }else{
+    const answerText = Array.isArray(item.answer) ? item.answer[0] : item.answer;
+    feedback.className = "feedback bad";
+    feedback.innerHTML = `
+      오답!
+      <div class="answer">정답: ${answerText}</div>
+    `;
+  }
+
+  answered = true;
+  selectedAnswer = "";
+  document.getElementById("checkBtn").style.display = "none";
+  document.getElementById("nextBtn").style.display = "block";
+}
+
+function nextQuestion(){
+  current++;
+
+  if(current >= questions.length){
+    showResult();
+  }else{
+    renderQuestion();
+  }
+}
+
+function showResult(){
+  document.getElementById("quizCard").style.display = "none";
+  document.getElementById("resultCard").style.display = "block";
+
+  const percent = Math.round(score / questions.length * 100);
+
+  document.getElementById("finalScore").innerText =
+    `${questions.length}문제 중 ${score}개 정답`;
+
+  let text = "";
+
+  if(percent >= 90){
+    text = "좋음. FSA PIC 대비 꽤 안정적임.";
+  }else if(percent >= 70){
+    text = "괜찮은데 행정처분이랑 온도 범위 더 외워야 함.";
+  }else{
+    text = "아직 위험함. 다시 풀면서 틀린 개념부터 잡자.";
+  }
+
+  document.getElementById("finalText").innerText = `점수 ${percent}점 · ${text}`;
+}
+
+function restartQuiz(){
+  startQuiz();
+}
+
+startQuiz();
 </script>
 
 </body>
