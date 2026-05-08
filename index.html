@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FSA PIC 믹스 퀴즈</title>
+
+<style>
+:root{
+  --sb:#006241;
+  --bg:#f6f4ee;
+  --card:#fff;
+  --text:#1f2937;
+  --line:#ddd;
+  --good:#0a8a43;
+  --bad:#d93025;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text);
+}
+
+header{
+  background:var(--sb);
+  color:white;
+  padding:24px 18px;
+  text-align:center;
+}
+
+header h1{
+  margin:0;
+  font-size:26px;
+}
+
+header p{
+  margin:8px 0 0;
+  opacity:.9;
+}
+
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 14px 70px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
+.badge{
+  display:inline-block;
+  background:#e6f3ed;
+  color:var(--sb);
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.question{
+  font-size:18px;
+  font-weight:800;
+  line-height:1.45;
+  margin-bottom:14px;
+}
+
+label{
+  display:block;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+
+input[type="text"]{
+  width:100%;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  font-size:16px;
+}
+
+.hint{
+  font-size:13px;
+  color:#6b7280;
+  margin-top:8px;
+}
+
+button{
+  width:100%;
+  border:none;
+  background:var(--sb);
+  color:white;
+  font-size:18px;
+  font-weight:800;
+  padding:16px;
+  border-radius:16px;
+  cursor:pointer;
+}
+
+.result{
+  display:none;
+  margin-top:24px;
+  background:white;
+  border-radius:18px;
+  padding:22px;
+}
+
+.correct{color:var(--good);font-weight:800}
+.wrong{color:var(--bad);font-weight:800}
+
+.answer{
+  font-size:14px;
+  color:#555;
+  margin:4px 0 14px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>FSA PIC 믹스 퀴즈</h1>
+  <p>객관식 · OX · 빈칸 · 단답형</p>
+</header>
+
+<div class="container" id="quiz"></div>
+
+<div class="container">
+  <button onclick="submitQuiz()">채점하기</button>
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+const quizData = [
+  {
+    type:"choice",
+    label:"객관식",
+    q:"근무 불가 증상에 해당하지 않는 것은?",
+    options:["설사","구토","인후통","두통"],
+    answer:"두통"
+  },
+  {
+    type:"ox",
+    label:"OX",
+    q:"TCS 식품은 식품 안전을 위해 시간과 온도 관리가 필요한 식품이다.",
+    options:["O","X"],
+    answer:"O"
+  },
+  {
+    type:"text",
+    label:"빈칸",
+    q:"냉장 보관 적정 온도는 ___~___도이다.",
+    answer:["0~10","0-10","0에서10","0도~10도","0도-10도"]
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"냉동고 적정 온도는?",
+    options:["0~10도","15~25도","-18도 이하","35도 이하"],
+    answer:"-18도 이하"
+  },
+  {
+    type:"text",
+    label:"단답형",
+    q:"구토·설사 등 biohazard 사고 발생 시 차단해야 하는 구역은 몇 m인가?",
+    answer:["7.5m","7.5","7.5미터"]
+  },
+  {
+    type:"choice",
+    label:"절차형",
+    q:"올바른 손 세척 절차는?",
+    options:[
+      "세척 > 헹굼 > 건조 > 소독",
+      "헹굼 > 세척 > 소독 > 건조",
+      "소독 > 세척 > 헹굼 > 건조",
+      "건조 > 세척 > 헹굼 > 소독"
+    ],
+    answer:"세척 > 헹굼 > 건조 > 소독"
+  },
+  {
+    type:"ox",
+    label:"OX",
+    q:"식품 접촉면을 맨손으로 취급하면 교차오염 위험이 있다.",
+    options:["O","X"],
+    answer:"O"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"Vomit kit 사용 시 착용해야 하는 보호구로 알맞은 것은?",
+    options:[
+      "앞치마만 착용",
+      "장갑만 착용",
+      "가운·위생모·마스크·장갑 착용",
+      "보호구 없이 빠르게 처리"
+    ],
+    answer:"가운·위생모·마스크·장갑 착용"
+  },
+  {
+    type:"text",
+    label:"빈칸",
+    q:"실온 온도 범위는 ___~___도이다.",
+    answer:["1~35","1-35","1도~35도","1도-35도"]
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"교차오염이 식품 매개성 질병을 일으키는 과정으로 알맞은 것은?",
+    options:[
+      "냉장 온도가 낮아져서 발생",
+      "식기나 손의 세균이 식품으로 이동하여 발생",
+      "음료가 빨리 제조되어 발생",
+      "라벨이 잘 붙어 있어서 발생"
+    ],
+    answer:"식기나 손의 세균이 식품으로 이동하여 발생"
+  },
+  {
+    type:"ox",
+    label:"OX",
+    q:"배수구 드레인 호스는 하수구에 일자로 직접 연결해도 된다.",
+    options:["O","X"],
+    answer:"X"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"기구·도구·장비 세척/소독의 기본 단계는?",
+    options:[
+      "소독 > 헹굼 > 세척 > 건조",
+      "세척 > 헹굼 > 건조 > 소독",
+      "건조 > 소독 > 세척 > 헹굼",
+      "헹굼 > 건조 > 소독 > 세척"
+    ],
+    answer:"세척 > 헹굼 > 건조 > 소독"
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"스타벅스 주요 알레르기 유발 식품이 아닌 것은?",
+    options:["우유","대두","밀","참치"],
+    answer:"참치"
+  },
+  {
+    type:"text",
+    label:"단답형",
+    q:"매장 내 화학물질별 안전자료를 확인할 수 있는 문서는?",
+    answer:["MSDS","msds","엠에스디에스"]
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"CCP 중요 관리점에 해당하지 않는 것은?",
+    options:["행동","온도","해충","파트너 닉네임"],
+    answer:"파트너 닉네임"
+  },
+  {
+    type:"text",
+    label:"빈칸",
+    q:"얼음/제조음료 규격 위반 시 식중독균 검출의 행정처분은 영업정지 ___일이다.",
+    answer:["30","30일"]
+  },
+  {
+    type:"choice",
+    label:"객관식",
+    q:"한글표시사항 전부 미표시 시 행정처분은?",
+    options:["영업정지 7일","영업정지 15일","영업정지 1개월","시정명령"],
+    answer:"영업정지 1개월"
+  }
+];
+
+const quiz = document.getElementById("quiz");
+
+quizData.forEach((item, index) => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  let html = `
+    <div class="badge">${item.label}</div>
+    <div class="question">${index + 1}. ${item.q}</div>
+  `;
+
+  if(item.type === "choice" || item.type === "ox"){
+    item.options.forEach(option => {
+      html += `
+        <label>
+          <input type="radio" name="q${index}" value="${option}">
+          ${option}
+        </label>
+      `;
+    });
+  }
+
+  if(item.type === "text"){
+    html += `
+      <input type="text" name="q${index}" placeholder="정답 입력">
+      <div class="hint">띄어쓰기나 단위는 조금 달라도 정답 처리될 수 있음</div>
+    `;
+  }
+
+  card.innerHTML = html;
+  quiz.appendChild(card);
+});
+
+function normalize(text){
+  return String(text)
+    .replace(/\s/g,"")
+    .replace(/도/g,"")
+    .replace(/미터/g,"m")
+    .toLowerCase();
+}
+
+function submitQuiz(){
+  let score = 0;
+  let resultHTML = "";
+
+  quizData.forEach((item, index) => {
+    let userAnswer = "";
+
+    if(item.type === "choice" || item.type === "ox"){
+      const selected = document.querySelector(`input[name="q${index}"]:checked`);
+      userAnswer = selected ? selected.value : "";
+    }
+
+    if(item.type === "text"){
+      const input = document.querySelector(`input[name="q${index}"]`);
+      userAnswer = input.value;
+    }
+
+    let isCorrect = false;
+
+    if(Array.isArray(item.answer)){
+      isCorrect = item.answer.some(ans => normalize(ans) === normalize(userAnswer));
+    }else{
+      isCorrect = normalize(userAnswer) === normalize(item.answer);
+    }
+
+    if(isCorrect){
+      score++;
+      resultHTML += `<p class="correct">${index + 1}번 정답</p>`;
+    }else{
+      const answerText = Array.isArray(item.answer) ? item.answer[0] : item.answer;
+      resultHTML += `
+        <p class="wrong">${index + 1}번 오답</p>
+        <div class="answer">정답 : ${answerText}</div>
+      `;
+    }
+  });
+
+  const result = document.getElementById("result");
+  result.style.display = "block";
+  result.innerHTML = `
+    <h2>${quizData.length}문제 중 ${score}개 정답</h2>
+    <p>점수 : ${Math.round(score / quizData.length * 100)}점</p>
+    <hr>
+    ${resultHTML}
+  `;
+
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: "smooth"
+  });
+}
+</script>
+
+</body>
+</html>
